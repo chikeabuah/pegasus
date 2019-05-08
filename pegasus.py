@@ -1,8 +1,15 @@
+# based on https://people.cs.umass.edu/~miklau/assets/pubs/dp/Chen17PeGaSus.pdf
 import numpy as np
+import copy
+import statistics as stats
 
-x = [5.0, 5.0, 6.0, 9.0, 10.0]
+ex = [5.0, 5.0, 6.0, 9.0, 10.0]
+ex2 = [5.6, 4.4, 6.7, 9.5, 10.2]
+ex3 = [[[0]], [[0, 1]], [[0, 1, 2]], [[0, 1, 2], [3]], [[0, 1, 2], [3], [4]]]
+
 
 eps = 0.001
+eps = 1
 
 def lap(v, epsilon):
   return v + np.random.laplace(loc=0,scale=1/epsilon)
@@ -11,7 +18,7 @@ def pert(v):
   return lap(v,eps)
 
 def perturb(l):
-  return map(pert,l)
+  return list(map(pert,l))
 
 def dev(counts):
   rhs = sum(counts)/len(counts)
@@ -20,11 +27,22 @@ def dev(counts):
 def index(l,idxs):
   return list(map(lambda i: l[i], idxs))
 
+def smooth(cs,ps):
+  if len(cs) != len(ps):
+    raise Exception('arg length mismatch')
+  else:
+    newcs = []
+    for i in range(len(cs)):
+      p = ps[i]
+      g = p[-1]
+      newcs.append(stats.median(index(cs,g)))
+    return newcs
+
 def group(counts,eps,thresh):
+  final_output = []
   output = []
   thresh1 = thresh
   for i in range(len(counts)):
-    print(f'partition before time {i} is {output}')
     if i == 0:
       g = []
       closed = True
@@ -42,9 +60,9 @@ def group(counts,eps,thresh):
         g.append(i)
         output.append(g)
         closed = False
-        print("here")
       else:
         output.append([i])
         closed = True
-        print("here1")
-  return output
+    print(f'partition at time {i} is {output}')
+    final_output.append(copy.deepcopy(output))
+  return final_output
